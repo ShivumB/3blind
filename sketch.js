@@ -17,30 +17,29 @@ var inputEdges;
 var answers;
 
 function genSequence() {
-	ans = "";
-	
+	let ans1 = "";	
 	for(let i = 0; i < 8; i++) {
 		let chosen = int(Math.random()*(cornerLetters.length - 1));
-		ans += cornerLetters[chosen].toLowerCase();
-		if(i % 2 == 1) ans += " ";
+		ans1 += cornerLetters[chosen].toLowerCase();
+		if(i % 2 == 1) ans1 += " ";
 		
 		let temp = cornerLetters[chosen];
 		cornerLetters[chosen] = cornerLetters[cornerLetters.length - 1];
 		cornerLetters[cornerLetters.length - 1] = temp;
 	}
 	
-	ans += "\n";
+	let ans2 = "";
 	for(let i = 0; i < 12; i++) {
 		let chosen = int(Math.random()*(edgeLetters.length - 1));
-		ans += edgeLetters[chosen];
-		if(i % 2 == 1) ans += " ";
+		ans2 += edgeLetters[chosen];
+		if(i % 2 == 1) ans2 += " ";
 		
 		let temp = edgeLetters[chosen];
 		edgeLetters[chosen] = edgeLetters[edgeLetters.length - 1];
 		edgeLetters[edgeLetters.length - 1] = temp;
 	}
 	
-	return ans;
+	return [ans1,ans2];
 }
 
 function lerpBg(fromBg, toBg) {
@@ -60,7 +59,7 @@ function setup() {
 	//missing b, m
 	edgeLetters = ["A","C","D","E","F","G","H","I","J","K","L","N","O","P","Q","R","S","T","U","V","W","X"];
 	
-	seq = "";
+	seq = ["",""];
 	
 	bg = [250,240,240];
 	bg1 = [250,240,240];
@@ -76,9 +75,7 @@ function setup() {
 	inputCorners.position(-10,-100);
 	inputEdges.position(-10,-100);
 	
-	answers = [];
-	answers[0] = "";
-	answers[1] = "";
+	answers = ["",""];
 }
 
 function keyPressed() {	
@@ -176,7 +173,7 @@ function draw() {
 
 			textSize(40);
 			textAlign(CENTER, CENTER);
-			text(seq, width/2,height/4);
+			text(seq[0] + "\n" + seq[1], width/2,height/4);
 			
 			if(answers[0] != "") {
 				text(answers[0], width/2,height*15/24);
@@ -200,7 +197,8 @@ function draw() {
 			
 			textSize(40);
 			textAlign(CENTER, CENTER);
-			text(seq, width/2,height/4);
+			
+			text(seq[0] + "\n" + seq[1], width/2,height/4);
 			
 			textSize(20);
 			textAlign(CENTER, TOP);
