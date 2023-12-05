@@ -1,8 +1,10 @@
 //goes from: title, press, memo, recall, title
 var scene;
+
 var cornerLetters;
 var edgeLetters;
 
+//for transitioning background
 var bg;
 var bg1;
 var bg2;
@@ -10,12 +12,16 @@ var bg2;
 var time;
 var startTime;
 
+//for full practice
 var inputCorners;
 var inputEdges;
-
 var answer;
 var response;
 var correctedResponse;
+
+//for letterPair practice
+var inputLetterPair;
+var pair;
 
 function genSequence() {
 	let ans1 = "";	
@@ -41,6 +47,31 @@ function genSequence() {
 	}
 	
 	return [ans1,ans2];
+}
+
+function genPair() {
+	let res = "";
+	if(Math.random() < 0) {
+			let chosen = int(Math.random()*(edgeLetters.length - 1));
+			res += edgeLetters[chosen];	
+		
+			let temp = edgeLetters[chosen];
+			edgeLetters[chosen] = edgeLetters[edgeLetters.length - 1];
+			edgeLetters[edgeLetters.length - 1] = temp;
+
+			res += edgeLetters[int(Math.random()*(edgeLetters.length - 1))];
+	} else {
+		let chosen = int(Math.random()*(cornerLetters.length - 1));
+		res += cornerLetters[chosen].toLowerCase();	
+		
+		let temp = cornerLetters[chosen];
+		cornerLetters[chosen] = cornerLetters[cornerLetters.length - 1];
+		cornerLetters[cornerLetters.length - 1] = temp;
+
+		res += cornerLetters[int(Math.random()*(cornerLetters.length - 1))].toLowerCase();
+	}
+	
+	return res;
 }
 
 function lerpBg(fromBg, toBg) {
@@ -106,40 +137,20 @@ function textArray(arr, x, y) {
 	fill(0);
 }
 
-function setup() {
-	createCanvas(windowWidth, windowHeight);
-		
-	scene = "title";
-	
-	//no buffer letters
-	//missing a, e, r
-	cornerLetters = ["B","C","D","F","G","H","I","J","K","L","M","N","O","P","Q","S","T","U","V","W","X"];
-	//missing b, m
-	edgeLetters = ["A","C","D","E","F","G","H","I","J","K","L","N","O","P","Q","R","S","T","U","V","W","X"];
-	
-	bg = [250,240,240];
-	bg1 = [250,240,240];
-	bg2 = [100,255,100];
-	
-	time = 0;
-	startTime = 0;
-	
-	inputCorners = createInput("");
-	inputCorners.addClass("textbox");
-	inputCorners.addClass("hidden");
-	inputCorners.position(width/2 - 140,height*15/24 - 20);
-	
-	inputEdges = createInput("");
-	inputEdges.addClass("textbox");
-	inputEdges.addClass("hidden");
-	inputEdges.position(width/2 - 140, height*15/24 + 30);
-	
-	answer = ["",""];
-	response = ["",""];
-	correctedResponse = ["",""];
-}
-
 function keyPressed() {	
+	
+	if(keyCode == 187) {
+		if(scene == "title") {
+			scene = "letterPair";
+			inputLetterPair.removeClass("hidden");
+			inputLetterPair.elt.focus();
+			inputLetterPair.value("");
+		} else if(scene == "letterPair") {
+			scene = "title";
+			inputLetterPair.addClass("hidden");
+		}
+	}
+	
 	if(keyCode == 32) {
 		if(scene == "title") {
 				time = 0;
@@ -170,7 +181,7 @@ function keyPressed() {
 			}
 		}
 		
-		if(scene == "memo") {
+		 else if(scene == "memo") {
 				scene = "recall";
 				
 				inputCorners.removeClass("hidden");
@@ -181,9 +192,13 @@ function keyPressed() {
 			
 				inputCorners.elt.focus();
 		}
+		
+		else if(scene == "letterPair") {
+			pair = genPair();
+			inputLetterPair.value("");
+		}
 	} 
 }
-
 
 function keyReleased() {	
 	if(keyCode == 32) {
@@ -200,6 +215,46 @@ function keyReleased() {
 	}
 }
 
+function setup() {
+	createCanvas(windowWidth, windowHeight);
+		
+	scene = "title";
+	
+	//no buffer letters
+	//missing a, e, r
+	cornerLetters = ["B","C","D","F","G","H","I","J","K","L","M","N","O","P","Q","S","T","U","V","W","X"];
+	//missing b, m
+	edgeLetters = ["A","C","D","E","F","G","H","I","J","K","L","N","O","P","Q","R","S","T","U","V","W","X"];
+	
+	bg = [250,240,240];
+	bg1 = [250,240,240];
+	bg2 = [100,255,100];
+	
+	time = 0;
+	startTime = 0;
+	
+	inputCorners = createInput("");
+	inputCorners.addClass("textbox");
+	inputCorners.addClass("hidden");
+	inputCorners.position(width/2 - 140,height*15/24 - 20);
+	
+	inputEdges = createInput("");
+	inputEdges.addClass("textbox");
+	inputEdges.addClass("hidden");
+	inputEdges.position(width/2 - 140, height*15/24 + 30);
+	
+	inputLetterPair = createInput("");
+	inputLetterPair.addClass("textbox");
+	inputLetterPair.addClass("hidden");
+	inputLetterPair.position(width/2 - 140, height/2 + 20);
+	
+	pair = genPair();
+	
+	answer = ["",""];
+	response = ["",""];
+	correctedResponse = ["",""];
+}
+
 function draw() {
 	background(bg[0], bg1[1], bg[2]);
 	
@@ -207,13 +262,15 @@ function draw() {
 	textAlign(LEFT, TOP);
 	text("3blind memo trainer", 30, 30);
 	
-	textSize(80);
-	textAlign(RIGHT, BOTTOM);
-	text(Math.floor(time/1000), width/2, height/2);
-	textSize(40);
-	textAlign(LEFT, BOTTOM);
-	text("." + Math.floor((time % 1000)/10), width/2, height/2);
-	
+	if(scene != "letterPair") {
+		textSize(80);
+		textAlign(RIGHT, BOTTOM);
+		text(Math.floor(time/1000), width/2, height/2);
+		textSize(40);
+		textAlign(LEFT, BOTTOM);
+		text("." + Math.floor((time % 1000)/10), width/2, height/2);
+	}
+
 	switch(scene) {
 		case "title":
 			lerpBg(bg, bg1);
@@ -221,41 +278,47 @@ function draw() {
 			textSize(40);
 			textAlign(CENTER, CENTER);
 			text(answer[0] + "\n" + answer[1], width/2,height/4);
-			
+
 			//text array changes the text aligning to LEFT, CENTER
 			textArray(correctedResponse[0], width/2,height*15/24);
 			textArray(correctedResponse[1], width/2,height*15/24 + 40);
-			
-			
+
+
 			textSize(20);
 			textAlign(CENTER, TOP);
 			text("press or hold space to start memo", width/2, height/2 + 10);
 			break;
-			
+
 		case "press":
 			lerpBg(bg, bg2);
 			break;
-			
+
 		case "memo":
 			lerpBg(bg, bg1);
-			
+
 			textSize(40);
 			textAlign(CENTER, CENTER);
 			text(answer[0] + "\n" + answer[1], width/2,height/4);
-			
+
 			textSize(20);
 			textAlign(CENTER, TOP);
 			text("press 'ENTER' to start recall", width/2, height/2 + 10);
-			
+
 			time = millis() - startTime;
 			break;
-			
+
 		case "recall":			
 			textAlign(CENTER, TOP);
 			textSize(20);
 			text("press 'SHIFT' + 'ENTER' to submit", width/2, height/2 + 10);
-			
+
 			time = millis() - startTime;
+			break;
+
+		case "letterPair":
+			textAlign(CENTER, BOTTOM);
+			textSize(80);
+			text(pair, width/2, height/2);
 			break;
 	}
 
