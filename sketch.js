@@ -1,6 +1,5 @@
 //goes from: title, press, memo, recall, title
 var scene;
-var seq;
 var cornerLetters;
 var edgeLetters;
 
@@ -14,7 +13,9 @@ var startTime;
 var inputCorners;
 var inputEdges;
 
-var answers;
+var answer;
+var response;
+var correctedResponse;
 
 function genSequence() {
 	let ans1 = "";	
@@ -48,9 +49,66 @@ function lerpBg(fromBg, toBg) {
 	fromBg[2] += 0.3*(toBg[2] - fromBg[2]);
 }
 
+function prettifyString(str) {
+	let temp = str.split("");
+	let res = "";
+	for(let i = 0; i < temp.length; i++) {
+		res += temp[i];
+		if(i % 2 == 1) res += " ";
+	}
+	return res;
+}
+
+function correctResponse(response, answer) {
+	res = [];
+	for(let i = 0; i < answer.length; i++) {
+		if(i < response.length) {
+			
+			if(answer.substring(i,i+1) == response.substring(i,i+1)) {
+				res[i] = [answer.substring(i,i+1), "black"];
+			} else {
+				res[i] = [response.substring(i, i + 1), "red"];
+			}			
+			
+		} else if(answer.substring(i,i+1) == " ") {
+			res[i] = [" ", "red"]
+		} else {
+			res[i] = ["_", "red"];
+		}
+	}
+	
+	//make rest of letters red
+	for(let i = answer.length; i < response.length; i++) {
+		res[i] = [response.substring(i,i+1), "red"];
+	}
+	fill(0);
+	return res;
+}
+
+function textArray(arr, x, y) {
+	textAlign(LEFT, CENTER);
+	
+	let lengthKeeper = "";
+	for(let i = 0; i < arr.length; i++) {
+		lengthKeeper += arr[i][0];
+	}
+	let startX = x - textWidth(lengthKeeper)/2;
+	
+	lengthKeeper = "";
+	for(let i = 0; i < arr.length; i++) {
+		if(arr[i][1] == "red") fill(255,0,0);
+		else fill (0);
+		
+		text(arr[i][0], startX + textWidth(lengthKeeper), y);
+		lengthKeeper += arr[i][0];
+	}
+	
+	fill(0);
+}
+
 function setup() {
 	createCanvas(windowWidth, windowHeight);
-	
+		
 	scene = "title";
 	
 	//no buffer letters
@@ -58,8 +116,6 @@ function setup() {
 	cornerLetters = ["B","C","D","F","G","H","I","J","K","L","M","N","O","P","Q","S","T","U","V","W","X"];
 	//missing b, m
 	edgeLetters = ["A","C","D","E","F","G","H","I","J","K","L","N","O","P","Q","R","S","T","U","V","W","X"];
-	
-	seq = ["",""];
 	
 	bg = [250,240,240];
 	bg1 = [250,240,240];
@@ -69,13 +125,18 @@ function setup() {
 	startTime = 0;
 	
 	inputCorners = createInput("");
-	inputEdges = createInput("");
 	inputCorners.addClass("textbox");
-	inputEdges.addClass("textbox");
-	inputCorners.position(-10,-100);
-	inputEdges.position(-10,-100);
+	inputCorners.addClass("hidden");
+	inputCorners.position(width/2 - 140,height*15/24 - 20);
 	
-	answers = ["",""];
+	inputEdges = createInput("");
+	inputEdges.addClass("textbox");
+	inputEdges.addClass("hidden");
+	inputEdges.position(width/2 - 140, height*15/24 + 30);
+	
+	answer = ["",""];
+	response = ["",""];
+	correctedResponse = ["",""];
 }
 
 function keyPressed() {	
@@ -90,34 +151,18 @@ function keyPressed() {
 		if(scene == "recall") {
 			if(keyIsDown(SHIFT)) {
 				scene = "title";
-				answers[0] = "";
-				let temp = inputCorners.value().toLowerCase().split("");
-				let p = "";
-				for(let i = 0; i < temp.length; i++) {
-					p += temp[i];
-					
-					if(p.length == 2) {
-						answers[0] += p + " ";
-						p = "";
-					}
-				}
 				
-				answers[1] = "";
-				temp = inputEdges.value().toUpperCase().split("");
-				p = "";
-				for(let i = 0; i < temp.length; i++) {
-					p += temp[i];
-					
-					if(p.length == 2) {
-						answers[1] += p + " ";
-						p = "";
-					}
-				}
+				//gen answers in same format as sequences
+				response[0] = prettifyString(inputCorners.value().toLowerCase());
+				response[1] = prettifyString(inputEdges.value().toUpperCase());
 				
-				inputCorners.value("");
-				inputCorners.position(-10,-100);
-				inputEdges.value("");
-				inputEdges.position(-10,-100);
+				//compare answers to sequences, generate list of strings
+				correctedResponse[0] = correctResponse(response[0], answer[0]);
+				correctedResponse[1] = correctResponse(response[1], answer[1]);
+				
+				inputCorners.addClass("hidden");
+				inputEdges.addClass("hidden");
+				
 			} else if(document.activeElement === inputCorners.elt) {
 				inputEdges.elt.focus();
 			} else if(document.activeElement === inputEdges.elt) {
@@ -128,11 +173,13 @@ function keyPressed() {
 		if(scene == "memo") {
 				scene = "recall";
 				
-				inputCorners.elt.focus();
-				inputCorners.position(width/2 - 140,height*15/24 - 20);
+				inputCorners.removeClass("hidden");
 				inputCorners.value("");
-				inputEdges.position(width/2 - 140, height*15/24 + 30);
+			
+				inputEdges.removeClass("hidden");
 				inputEdges.value("");
+			
+				inputCorners.elt.focus();
 		}
 	} 
 }
@@ -147,7 +194,7 @@ function keyReleased() {
 				startTime = millis();
 				time = millis();
 				
-				seq = genSequence();
+				answer = genSequence();
 				break;
 		}
 	}
@@ -173,14 +220,12 @@ function draw() {
 
 			textSize(40);
 			textAlign(CENTER, CENTER);
-			text(seq[0] + "\n" + seq[1], width/2,height/4);
+			text(answer[0] + "\n" + answer[1], width/2,height/4);
 			
-			if(answers[0] != "") {
-				text(answers[0], width/2,height*15/24);
-			}
-			if(answers[1] != "") {
-				text("\n\n" + answers[1], width/2,height*15/24);
-			}
+			//text array changes the text aligning to LEFT, CENTER
+			textArray(correctedResponse[0], width/2,height*15/24);
+			textArray(correctedResponse[1], width/2,height*15/24 + 40);
+			
 			
 			textSize(20);
 			textAlign(CENTER, TOP);
@@ -188,7 +233,6 @@ function draw() {
 			break;
 			
 		case "press":
-			textAlign(CENTER, TOP);
 			lerpBg(bg, bg2);
 			break;
 			
@@ -197,8 +241,7 @@ function draw() {
 			
 			textSize(40);
 			textAlign(CENTER, CENTER);
-			
-			text(seq[0] + "\n" + seq[1], width/2,height/4);
+			text(answer[0] + "\n" + answer[1], width/2,height/4);
 			
 			textSize(20);
 			textAlign(CENTER, TOP);
