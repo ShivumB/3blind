@@ -23,6 +23,19 @@ var correctedResponse;
 var inputLetterPair;
 var pair;
 
+//for tracing practice
+var inputTraceCorner;
+var inputTraceEdge;
+
+//for tracing
+var corner;
+var cornerOptions;
+// var mouseInitPos;
+// var mouseDelta;
+
+//for opengl
+var font;
+
 function genSequence() {
 	let ans1 = "";	
 	for(let i = 0; i < 8; i++) {
@@ -72,6 +85,53 @@ function genPair() {
 	}
 	
 	return res;
+}
+
+function genCorner() {
+	
+	const g = color(0,255,0);
+	const b = color(0, 0, 255);
+	const r = color(255,0, 0);
+	const o = color(255,165,0);
+	const w = color(255,255,255);
+	const y = color(255,255,0);
+	
+	let options = [
+		[g, o, w],
+		[g, w, r],
+		[g, r, y],
+		[g, y, o],
+		[w, o, b],
+		[w, b, r],
+		[b, o, y],
+		[b, y, r],
+	];
+	
+	let letters = [
+		["i", "f", "d"],
+		["j", "c", "m"],
+		["k", "p", "v"],
+		["l", "u", "g"],
+		["a", "e", "r"],
+		["b", "q", "n"],
+		["s", "h", "x"],
+		["t", "w", "o"]
+	]
+	
+	//this is so no repeats - after chose corner, corner goes to 8th slot, then comes back next time
+	let cornerIndex = int(Math.random() * 7);
+	
+	let temp = cornerOptions[cornerIndex];
+	cornerOptions[cornerIndex] = cornerOptions[7];
+	cornerOptions[7] = temp;
+	
+	const chosenCorner = options[cornerOptions[cornerIndex]];
+	const orientation = int(Math.random()*3);
+	
+	const c = [chosenCorner[(0 + orientation)%3], chosenCorner[(1 + orientation)%3], chosenCorner[(2 + orientation)%3]];
+	const l = letters[cornerOptions[cornerIndex]][orientation];
+	
+	return [c,l];
 }
 
 function lerpBg(fromBg, toBg) {
@@ -143,11 +203,22 @@ function keyPressed() {
 		if(scene == "title") {
 			scene = "letterPair";
 			inputLetterPair.removeClass("hidden");
-			inputLetterPair.elt.focus();
 			inputLetterPair.value("");
+			inputLetterPair.elt.focus();
+			
 		} else if(scene == "letterPair") {
-			scene = "title";
+			scene = "traceCorners";
 			inputLetterPair.addClass("hidden");
+			
+			inputTraceCorner.removeClass("hidden");
+			inputTraceCorner.value("");
+			inputTraceCorner.elt.focus();
+			
+			startTime = millis();
+		} else if(scene == "traceCorners") {
+			scene = "title";
+			
+			inputTraceCorner.addClass("hidden");
 		}
 	}
 	
@@ -197,6 +268,12 @@ function keyPressed() {
 			pair = genPair();
 			inputLetterPair.value("");
 		}
+		
+		else if(scene == "traceCorners" && inputTraceCorner.value() == corner[1]) {
+			corner = genCorner();
+			inputTraceCorner.value("");
+			startTime = millis();
+		}
 	} 
 }
 
@@ -207,7 +284,6 @@ function keyReleased() {
 				scene = "memo";
 				
 				startTime = millis();
-				time = millis();
 				
 				answer = genSequence();
 				break;
@@ -215,9 +291,26 @@ function keyReleased() {
 	}
 }
 
+function mousePressed() {
+	if(scene == "traceCorners") {
+		// mouseInitPos = [mouseX, mouseY];
+	}
+}
+
+function mouseReleased() {
+	if(scene == "traceCorners") {
+		// mouseDelta = [mouseDelta[0] + (mouseX - mouseInitPos[0]), mouseDelta[1] + (mouseY - mouseInitPos[1])];
+	}
+}
+
+function preload() {	
+		font = loadFont("Roboto-Regular.ttf");
+}
+
 function setup() {
-	createCanvas(windowWidth, windowHeight);
-		
+	createCanvas(windowWidth, windowHeight, WEBGL);
+	textFont(font);		
+	
 	scene = "title";
 	
 	//no buffer letters
@@ -236,39 +329,51 @@ function setup() {
 	inputCorners = createInput("");
 	inputCorners.addClass("textbox");
 	inputCorners.addClass("hidden");
-	inputCorners.position(width/2 - 140,height*15/24 - 20);
+	inputCorners.position(width/2 - 140, height/2 + height/8 - 20);
 	
 	inputEdges = createInput("");
 	inputEdges.addClass("textbox");
 	inputEdges.addClass("hidden");
-	inputEdges.position(width/2 - 140, height*15/24 + 30);
+	inputEdges.position(width/2 - 140, height/2 + height/8 + 30);
 	
 	inputLetterPair = createInput("");
 	inputLetterPair.addClass("textbox");
 	inputLetterPair.addClass("hidden");
 	inputLetterPair.position(width/2 - 140, height/2 + 20);
 	
+	inputTraceCorner = createInput("");
+	inputTraceCorner.addClass("textbox");
+	inputTraceCorner.addClass("hidden");
+	inputTraceCorner.position(width/2 - 140, height/2 + 20);
+	
 	pair = genPair();
+	cornerOptions = [0,1,2,3,4,5,6,7];
+	corner = genCorner();
 	
 	answer = ["",""];
 	response = ["",""];
-	correctedResponse = ["",""];
+	correctedResponse = ["",""];	
+	
+	// mouseInitPos = [0,0];
+	// mouseDelta = [45,225];
 }
 
 function draw() {
+
 	background(bg[0], bg1[1], bg[2]);
 	
 	textSize(20);
+	fill(0);
 	textAlign(LEFT, TOP);
-	text("3blind memo trainer", 30, 30);
+	text("3blind memo trainer", 30 - width/2, 30 - height/2);
 	
 	if(scene != "letterPair") {
 		textSize(80);
 		textAlign(RIGHT, BOTTOM);
-		text(Math.floor(time/1000), width/2, height/2);
+		text(Math.floor(time/1000), 0, 0);
 		textSize(40);
 		textAlign(LEFT, BOTTOM);
-		text("." + Math.floor((time % 1000)/10), width/2, height/2);
+		text("." + Math.floor((time % 1000)/10), 0, 0);
 	}
 
 	switch(scene) {
@@ -277,16 +382,16 @@ function draw() {
 
 			textSize(40);
 			textAlign(CENTER, CENTER);
-			text(answer[0] + "\n" + answer[1], width/2,height/4);
+			text(answer[0] + "\n" + answer[1], 0, -height/4);
 
 			//text array changes the text aligning to LEFT, CENTER
-			textArray(correctedResponse[0], width/2,height*15/24);
-			textArray(correctedResponse[1], width/2,height*15/24 + 40);
+			textArray(correctedResponse[0], 0, height/8);
+			textArray(correctedResponse[1], 0, height/8 + 40);
 
 
 			textSize(20);
 			textAlign(CENTER, TOP);
-			text("press or hold space to start memo", width/2, height/2 + 10);
+			text("press or hold space to start memo", 0, 10);
 			break;
 
 		case "press":
@@ -298,11 +403,11 @@ function draw() {
 
 			textSize(40);
 			textAlign(CENTER, CENTER);
-			text(answer[0] + "\n" + answer[1], width/2,height/4);
+			text(answer[0] + "\n" + answer[1], 0, -height/4);
 
 			textSize(20);
 			textAlign(CENTER, TOP);
-			text("press 'ENTER' to start recall", width/2, height/2 + 10);
+			text("press 'ENTER' to start recall", 0, 10);
 
 			time = millis() - startTime;
 			break;
@@ -310,7 +415,7 @@ function draw() {
 		case "recall":			
 			textAlign(CENTER, TOP);
 			textSize(20);
-			text("press 'SHIFT' + 'ENTER' to submit", width/2, height/2 + 10);
+			text("press 'SHIFT' + 'ENTER' to submit", 0, 10);
 
 			time = millis() - startTime;
 			break;
@@ -318,8 +423,47 @@ function draw() {
 		case "letterPair":
 			textAlign(CENTER, BOTTOM);
 			textSize(80);
-			text(pair, width/2, height/2);
+			text(pair, 0, 0);
+			break;
+			
+		case "traceCorners":
+			
+			ambientLight(255);
+			translate(0,-185,0);
+			
+			//to transform corner
+			push();
+						
+			// //get rotation of corners
+			// if(mouseIsPressed) {
+			// 	rotateX((mouseDelta[1] + (mouseY - mouseInitPos[1])) * -0.01);
+			// 	rotateY((mouseDelta[0] + (mouseX - mouseInitPos[0])) * 0.01);
+			// } else {
+			// 	rotateX(mouseDelta[1] * -0.01);
+			// 	rotateY(mouseDelta[0] * 0.01);
+			// }
+			
+			rotateX(-3*PI/4);
+			rotateZ(-PI/4);
+			
+			// ambientMaterial(0);
+			// box(100,100,100);
+			
+			translate(0,0,-50);
+			ambientMaterial(corner[0][0]);
+			box(100, 100, 10);
+			
+			translate(50, 0, 50);
+			ambientMaterial(corner[0][1]);
+			box(10, 100, 100);
+			
+			translate(-50, -50, 0);
+			ambientMaterial(corner[0][2]);
+			box(100, 10, 100);
+			
+			pop();
+			
+			time = millis() - startTime;			
 			break;
 	}
-
 }
