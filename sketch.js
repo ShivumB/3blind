@@ -19,288 +19,26 @@ var answer;
 var response;
 var correctedResponse;
 
+//general input used when input directly under timer. used to have multiple inputs at same position, reduced to this.
+var input2;
+
 //for letterPair practice
-var inputLetterPair;
 var pair;
 
-//for tracing practice
-var inputTraceCorner;
-var inputTraceEdge;
-
-//for tracing
+//for corner tracing
 var corner;
 var cornerOptions;
-// var mouseInitPos;
-// var mouseDelta;
 
-//for opengl
+//for edge tracing
+var edge;
+var edgeOptions;
+
 var font;
-
-function genSequence() {
-	let ans1 = "";	
-	for(let i = 0; i < 8; i++) {
-		let chosen = int(Math.random()*(cornerLetters.length - 1));
-		ans1 += cornerLetters[chosen].toLowerCase();
-		if(i % 2 == 1) ans1 += " ";
-		
-		let temp = cornerLetters[chosen];
-		cornerLetters[chosen] = cornerLetters[cornerLetters.length - 1];
-		cornerLetters[cornerLetters.length - 1] = temp;
-	}
-	
-	let ans2 = "";
-	for(let i = 0; i < 12; i++) {
-		let chosen = int(Math.random()*(edgeLetters.length - 1));
-		ans2 += edgeLetters[chosen];
-		if(i % 2 == 1) ans2 += " ";
-		
-		let temp = edgeLetters[chosen];
-		edgeLetters[chosen] = edgeLetters[edgeLetters.length - 1];
-		edgeLetters[edgeLetters.length - 1] = temp;
-	}
-	
-	return [ans1,ans2];
-}
-
-function genPair() {
-	let res = "";
-	if(Math.random() < 0) {
-			let chosen = int(Math.random()*(edgeLetters.length - 1));
-			res += edgeLetters[chosen];	
-		
-			let temp = edgeLetters[chosen];
-			edgeLetters[chosen] = edgeLetters[edgeLetters.length - 1];
-			edgeLetters[edgeLetters.length - 1] = temp;
-
-			res += edgeLetters[int(Math.random()*(edgeLetters.length - 1))];
-	} else {
-		let chosen = int(Math.random()*(cornerLetters.length - 1));
-		res += cornerLetters[chosen].toLowerCase();	
-		
-		let temp = cornerLetters[chosen];
-		cornerLetters[chosen] = cornerLetters[cornerLetters.length - 1];
-		cornerLetters[cornerLetters.length - 1] = temp;
-
-		res += cornerLetters[int(Math.random()*(cornerLetters.length - 1))].toLowerCase();
-	}
-	
-	return res;
-}
-
-function genCorner() {
-	
-	const g = color(0,255,0);
-	const b = color(0, 0, 255);
-	const r = color(255,0, 0);
-	const o = color(255,165,0);
-	const w = color(255,255,255);
-	const y = color(255,255,0);
-	
-	let options = [
-		[g, o, w],
-		[g, w, r],
-		[g, r, y],
-		[g, y, o],
-		[w, o, b],
-		[w, b, r],
-		[b, o, y],
-		[b, y, r],
-	];
-	
-	let letters = [
-		["i", "f", "d"],
-		["j", "c", "m"],
-		["k", "p", "v"],
-		["l", "u", "g"],
-		["a", "e", "r"],
-		["b", "q", "n"],
-		["s", "h", "x"],
-		["t", "w", "o"]
-	]
-	
-	//this is so no repeats - after chose corner, corner goes to 8th slot, then comes back next time
-	let cornerIndex = int(Math.random() * 7);
-	
-	let temp = cornerOptions[cornerIndex];
-	cornerOptions[cornerIndex] = cornerOptions[7];
-	cornerOptions[7] = temp;
-	
-	const chosenCorner = options[cornerOptions[cornerIndex]];
-	const orientation = int(Math.random()*3);
-	
-	const c = [chosenCorner[(0 + orientation)%3], chosenCorner[(1 + orientation)%3], chosenCorner[(2 + orientation)%3]];
-	const l = letters[cornerOptions[cornerIndex]][orientation];
-	
-	return [c,l];
-}
 
 function lerpBg(fromBg, toBg) {
 	fromBg[0] += 0.3*(toBg[0] - fromBg[0]);
 	fromBg[1] += 0.3*(toBg[1] - fromBg[1]);
 	fromBg[2] += 0.3*(toBg[2] - fromBg[2]);
-}
-
-function prettifyString(str) {
-	let temp = str.split("");
-	let res = "";
-	for(let i = 0; i < temp.length; i++) {
-		res += temp[i];
-		if(i % 2 == 1) res += " ";
-	}
-	return res;
-}
-
-function correctResponse(response, answer) {
-	res = [];
-	for(let i = 0; i < answer.length; i++) {
-		if(i < response.length) {
-			
-			if(answer.substring(i,i+1) == response.substring(i,i+1)) {
-				res[i] = [answer.substring(i,i+1), "black"];
-			} else {
-				res[i] = [response.substring(i, i + 1), "red"];
-			}			
-			
-		} else if(answer.substring(i,i+1) == " ") {
-			res[i] = [" ", "red"]
-		} else {
-			res[i] = ["_", "red"];
-		}
-	}
-	
-	//make rest of letters red
-	for(let i = answer.length; i < response.length; i++) {
-		res[i] = [response.substring(i,i+1), "red"];
-	}
-	fill(0);
-	return res;
-}
-
-function textArray(arr, x, y) {
-	textAlign(LEFT, CENTER);
-	
-	let lengthKeeper = "";
-	for(let i = 0; i < arr.length; i++) {
-		lengthKeeper += arr[i][0];
-	}
-	let startX = x - textWidth(lengthKeeper)/2;
-	
-	lengthKeeper = "";
-	for(let i = 0; i < arr.length; i++) {
-		if(arr[i][1] == "red") fill(255,0,0);
-		else fill (0);
-		
-		text(arr[i][0], startX + textWidth(lengthKeeper), y);
-		lengthKeeper += arr[i][0];
-	}
-	
-	fill(0);
-}
-
-function keyPressed() {	
-	
-	if(keyCode == 187) {
-		if(scene == "title") {
-			scene = "letterPair";
-			inputLetterPair.removeClass("hidden");
-			inputLetterPair.value("");
-			inputLetterPair.elt.focus();
-			
-		} else if(scene == "letterPair") {
-			scene = "traceCorners";
-			inputLetterPair.addClass("hidden");
-			
-			inputTraceCorner.removeClass("hidden");
-			inputTraceCorner.value("");
-			inputTraceCorner.elt.focus();
-			
-			startTime = millis();
-		} else if(scene == "traceCorners") {
-			scene = "title";
-			
-			inputTraceCorner.addClass("hidden");
-		}
-	}
-	
-	if(keyCode == 32) {
-		if(scene == "title") {
-				time = 0;
-				scene = "press";
-		}
-	}
-	
-	if(keyCode === 13) {
-		if(scene == "recall") {
-			if(keyIsDown(SHIFT)) {
-				scene = "title";
-				
-				//gen answers in same format as sequences
-				response[0] = prettifyString(inputCorners.value().toLowerCase());
-				response[1] = prettifyString(inputEdges.value().toUpperCase());
-				
-				//compare answers to sequences, generate list of strings
-				correctedResponse[0] = correctResponse(response[0], answer[0]);
-				correctedResponse[1] = correctResponse(response[1], answer[1]);
-				
-				inputCorners.addClass("hidden");
-				inputEdges.addClass("hidden");
-				
-			} else if(document.activeElement === inputCorners.elt) {
-				inputEdges.elt.focus();
-			} else if(document.activeElement === inputEdges.elt) {
-				inputCorners.elt.focus();
-			}
-		}
-		
-		 else if(scene == "memo") {
-				scene = "recall";
-				
-				inputCorners.removeClass("hidden");
-				inputCorners.value("");
-			
-				inputEdges.removeClass("hidden");
-				inputEdges.value("");
-			
-				inputCorners.elt.focus();
-		}
-		
-		else if(scene == "letterPair") {
-			pair = genPair();
-			inputLetterPair.value("");
-		}
-		
-		else if(scene == "traceCorners" && inputTraceCorner.value() == corner[1]) {
-			corner = genCorner();
-			inputTraceCorner.value("");
-			startTime = millis();
-		}
-	} 
-}
-
-function keyReleased() {	
-	if(keyCode == 32) {
-		switch(scene) {
-			case "press":
-				scene = "memo";
-				
-				startTime = millis();
-				
-				answer = genSequence();
-				break;
-		}
-	}
-}
-
-function mousePressed() {
-	if(scene == "traceCorners") {
-		// mouseInitPos = [mouseX, mouseY];
-	}
-}
-
-function mouseReleased() {
-	if(scene == "traceCorners") {
-		// mouseDelta = [mouseDelta[0] + (mouseX - mouseInitPos[0]), mouseDelta[1] + (mouseY - mouseInitPos[1])];
-	}
 }
 
 function preload() {	
@@ -336,26 +74,21 @@ function setup() {
 	inputEdges.addClass("hidden");
 	inputEdges.position(width/2 - 140, height/2 + height/8 + 30);
 	
-	inputLetterPair = createInput("");
-	inputLetterPair.addClass("textbox");
-	inputLetterPair.addClass("hidden");
-	inputLetterPair.position(width/2 - 140, height/2 + 20);
-	
-	inputTraceCorner = createInput("");
-	inputTraceCorner.addClass("textbox");
-	inputTraceCorner.addClass("hidden");
-	inputTraceCorner.position(width/2 - 140, height/2 + 20);
+	input2 = createInput("");
+	input2.addClass("textbox");
+	input2.addClass("hidden");
+	input2.position(width/2 - 140, height/2 + 20);
 	
 	pair = genPair();
 	cornerOptions = [0,1,2,3,4,5,6,7];
 	corner = genCorner();
 	
+	edgeOptions = [0,1,2,3,4,5,6,7,8,9,10,11];
+	edge = genEdge();
+	
 	answer = ["",""];
 	response = ["",""];
 	correctedResponse = ["",""];	
-	
-	// mouseInitPos = [0,0];
-	// mouseDelta = [45,225];
 }
 
 function draw() {
@@ -427,27 +160,14 @@ function draw() {
 			break;
 			
 		case "traceCorners":
-			
 			ambientLight(255);
-			translate(0,-185,0);
+			translate(6,-185,0);
 			
 			//to transform corner
 			push();
-						
-			// //get rotation of corners
-			// if(mouseIsPressed) {
-			// 	rotateX((mouseDelta[1] + (mouseY - mouseInitPos[1])) * -0.01);
-			// 	rotateY((mouseDelta[0] + (mouseX - mouseInitPos[0])) * 0.01);
-			// } else {
-			// 	rotateX(mouseDelta[1] * -0.01);
-			// 	rotateY(mouseDelta[0] * 0.01);
-			// }
 			
 			rotateX(-3*PI/4);
 			rotateZ(-PI/4);
-			
-			// ambientMaterial(0);
-			// box(100,100,100);
 			
 			translate(0,0,-50);
 			ambientMaterial(corner[0][0]);
@@ -464,6 +184,31 @@ function draw() {
 			pop();
 			
 			time = millis() - startTime;			
+			break;
+			
+		case "traceEdges":
+			
+			orbitControl();
+			
+			ambientLight(255);
+			translate(0,-100,0);
+			
+			//to transform corner
+			push();
+			
+			rotateX(-PI/3)			
+						
+			translate(0, -50, -100);
+			ambientMaterial(edge[0][0]);
+			box(100, 10, 100);
+			
+			translate(0,50,50);
+			ambientMaterial(edge[0][1]);
+			box(100, 100, 10);
+			
+			pop();
+			
+			time = millis() - startTime;	
 			break;
 	}
 }
