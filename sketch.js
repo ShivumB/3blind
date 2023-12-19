@@ -54,8 +54,8 @@ function setup() {
 	//no buffer letters
 	//missing a, e, r
 	cornerLetters = ["B","C","D","F","G","H","I","J","K","L","M","N","O","P","Q","S","T","U","V","W","X"];
-	//missing b, m
-	edgeLetters = ["A","C","D","E","F","G","H","I","J","K","L","N","O","P","Q","R","S","T","U","V","W","X"];
+	//missing u, k
+	edgeLetters = ["A","B","C","D","E","F","G","H","I","J","L","M","N","O","P","Q","R","S","T","V","W","X"];
 	
 	bg = [250,240,240];
 	bg1 = [250,240,240];
